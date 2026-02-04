@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { useWakeLock } from '../../../hooks/useWakeLock';
 
 /**
  * Hook to manage the timer engine (Web Worker).
@@ -9,6 +10,8 @@ export const useTimerEngine = (
     isRunning: boolean,
     onTick: (elapsedMs: number) => void
 ) => {
+    useWakeLock(isRunning);
+
     const workerRef = useRef<Worker | null>(null);
     const startTimeRef = useRef<number | null>(null);
     const pausedTimeRef = useRef<number>(0);
