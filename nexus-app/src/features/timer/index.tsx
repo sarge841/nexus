@@ -9,9 +9,19 @@ import { useAudio } from '../../hooks/useAudio';
 import { List } from 'lucide-react';
 
 export const TimerFeature = () => {
-    const { isRunning, tickTimer, resetTimer, activePresetId, presets, currentIntervalIndex } = useTimerStore();
+    const {
+        isRunning,
+        tickTimer,
+        resetTimer,
+        activePresetId,
+        presets,
+        currentIntervalIndex,
+        timerResetRequest,
+        clearTimerResetRequest
+    } = useTimerStore();
     const { playSound, speak } = useAudio();
     const previousIntervalIndexRef = useRef(currentIntervalIndex);
+    const wasRunningRef = useRef(isRunning);
     const [isPresetManagerOpen, setIsPresetManagerOpen] = useState(false);
 
     const activePreset = presets.find(p => p.id === activePresetId);
@@ -25,12 +35,23 @@ export const TimerFeature = () => {
         reset();
     };
 
+    // Handle Engine Reset Requests (e.g. from jumpToInterval)
+    useEffect(() => {
+        if (timerResetRequest) {
+            reset();
+            clearTimerResetRequest();
+        }
+    }, [timerResetRequest, reset, clearTimerResetRequest]);
+
     // Audio Side Effects
     useEffect(() => {
         if (!activePreset || !isRunning) return;
 
-        // Check if index changed
-        if (currentIntervalIndex !== previousIntervalIndexRef.current) {
+        // Check if index changed OR logic started
+        const indexChanged = currentIntervalIndex !== previousIntervalIndexRef.current;
+        const justStarted = isRunning && !wasRunningRef.current;
+
+        if (indexChanged || justStarted) {
             const interval = activePreset.intervals[currentIntervalIndex];
             if (interval) {
                 // Determine final volumes
@@ -38,13 +59,19 @@ export const TimerFeature = () => {
                 const finalSoundVolume = master * (interval.soundVolume ?? (activePreset.globalSoundVolume ?? 1.0));
                 const finalTTSVolume = master * (interval.ttsVolume ?? (activePreset.globalTTSVolume ?? 1.0));
 
-                playSound(interval.soundType, finalSoundVolume);
+                // Only play beep on index change (not resume)
+                if (indexChanged) {
+                    playSound(interval.soundType, finalSoundVolume);
+                }
+
+                // Speak on both index change AND resume (if VO enabled)
                 if (interval.voiceOver) {
                     speak(interval.name, finalTTSVolume);
                 }
             }
             previousIntervalIndexRef.current = currentIntervalIndex;
         }
+        wasRunningRef.current = isRunning;
     }, [currentIntervalIndex, isRunning, activePresetId, activePreset, playSound, speak]);
 
     // Reset ref on stop/reset

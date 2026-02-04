@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTimerStore } from '../store';
+import { ShareModal } from './ShareModal';
 import type { TimerPreset } from '../store';
 import { X, Plus, Trash2, Edit2, Copy, Share2, Download } from 'lucide-react';
 import clsx from 'clsx';
@@ -23,6 +24,7 @@ export const PresetManager = ({ onClose }: PresetManagerProps) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [toastMessage, setToastMessage] = useState<string | null>(null);
+    const [presetToShare, setPresetToShare] = useState<TimerPreset | null>(null);
 
     const showToast = (message: string) => {
         setToastMessage(message);
@@ -57,22 +59,6 @@ export const PresetManager = ({ onClose }: PresetManagerProps) => {
         if (confirm('Are you sure you want to delete this preset?')) {
             deletePreset(id);
             showToast('Workout deleted');
-        }
-    };
-
-    const handleShare = async (preset: TimerPreset, e: React.MouseEvent) => {
-        e.stopPropagation();
-        const data = {
-            version: 1,
-            type: 'nexus-timer-preset',
-            data: preset
-        };
-        try {
-            await navigator.clipboard.writeText(JSON.stringify(data));
-            showToast('Copied to clipboard!');
-        } catch (err) {
-            console.error('Failed to copy', err);
-            showToast('Failed to copy');
         }
     };
 
@@ -192,9 +178,12 @@ export const PresetManager = ({ onClose }: PresetManagerProps) => {
 
                                 <div className="flex items-center space-x-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                     <button
-                                        onClick={(e) => handleShare(preset, e)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPresetToShare(preset);
+                                        }}
                                         className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded"
-                                        title="Share to Clipboard"
+                                        title="Share"
                                     >
                                         <Share2 className="w-4 h-4" />
                                     </button>
@@ -241,6 +230,13 @@ export const PresetManager = ({ onClose }: PresetManagerProps) => {
                     </button>
                 </div>
             </div>
+
+            {presetToShare && (
+                <ShareModal
+                    preset={presetToShare}
+                    onClose={() => setPresetToShare(null)}
+                />
+            )}
         </div>
     );
 };

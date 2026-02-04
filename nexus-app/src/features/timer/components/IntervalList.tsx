@@ -32,7 +32,8 @@ const SortableIntervalItem = ({
     isPast,
     onEdit,
     onDelete,
-    onDuplicate
+    onDuplicate,
+    onJump
 }: {
     interval: Interval;
     index: number;
@@ -41,6 +42,7 @@ const SortableIntervalItem = ({
     onEdit: () => void;
     onDelete: () => void;
     onDuplicate: (e: React.MouseEvent) => void;
+    onJump: () => void;
 }) => {
     const {
         attributes,
@@ -62,6 +64,7 @@ const SortableIntervalItem = ({
         <div
             ref={setNodeRef}
             style={style}
+            onClick={onJump}
             className={clsx(
                 "group relative flex items-center justify-between p-3 rounded-lg border transition-all pr-24 touch-manipulation",
                 isActive
@@ -128,7 +131,10 @@ export const IntervalList = () => {
         updateInterval,
         addInterval,
         duplicateInterval,
-        updatePreset // Need to update the whole list
+        updatePreset, // Need to update the whole list
+        jumpToInterval,
+        lastDeleted,
+        undoDeleteInterval
     } = useTimerStore();
 
     const activePreset = presets.find(p => p.id === activePresetId);
@@ -220,11 +226,27 @@ export const IntervalList = () => {
                                     onEdit={() => setEditingIntervalId(interval.id)}
                                     onDelete={() => deleteInterval(interval.id)}
                                     onDuplicate={(e) => handleDuplicate(interval.id, e)}
+                                    onJump={() => jumpToInterval(index)}
                                 />
                             ))}
                         </div>
                     </SortableContext>
                 </DndContext>
+
+                {/* Undo Toast */}
+                {lastDeleted && (
+                    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+                        <div className="bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-4">
+                            <span className="text-sm">Deleted "{lastDeleted.interval.name}"</span>
+                            <button
+                                onClick={undoDeleteInterval}
+                                className="text-indigo-400 hover:text-indigo-300 font-bold text-sm uppercase tracking-wide"
+                            >
+                                Undo
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <button
                     onClick={handleAdd}

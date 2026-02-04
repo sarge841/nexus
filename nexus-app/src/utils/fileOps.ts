@@ -1,11 +1,20 @@
 import type { TimerPreset } from '../features/timer/store';
 
+export const sanitizePreset = (preset: TimerPreset) => {
+    const { id, ...rest } = preset;
+    const intervals = preset.intervals.map((interval) => {
+        const { id: _id, ...i } = interval;
+        return i;
+    });
+    return { ...rest, intervals };
+};
+
 export const exportPresets = (presets: TimerPreset[]): string => {
     const data = {
         version: 1,
         type: 'nexus-timer-presets',
         exportedAt: new Date().toISOString(),
-        presets,
+        presets: presets.map(sanitizePreset),
     };
     return JSON.stringify(data, null, 2);
 };

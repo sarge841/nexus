@@ -46,8 +46,15 @@ interface TimerState {
     isRunning: boolean;
     elapsedInInterval: number; // milliseconds
     intervalBaseline: number; // Time accumulated before current interval started
+    lastDeleted: {
+        presetId: string;
+        interval: Interval;
+        index: number;
+    } | null;
+    timerResetRequest: boolean;
 
     // Actions
+    clearTimerResetRequest: () => void;
     addPreset: (preset: TimerPreset) => void;
     updatePreset: (id: string, updates: Partial<TimerPreset>) => void;
     deletePreset: (id: string) => void;
@@ -65,6 +72,8 @@ interface TimerState {
     deleteInterval: (intervalId: string) => void;
     duplicateInterval: (intervalId: string, newId: string) => void;
     moveInterval: (fromIndex: number, toIndex: number) => void;
+    jumpToInterval: (index: number) => void;
+    undoDeleteInterval: () => void;
 }
 
 export const useTimerStore = create<TimerState>()(
@@ -77,6 +86,10 @@ export const useTimerStore = create<TimerState>()(
             isRunning: false,
             elapsedInInterval: 0,
             intervalBaseline: 0,
+            lastDeleted: null,
+            timerResetRequest: false,
+
+            clearTimerResetRequest: () => set({ timerResetRequest: false }),
 
             addPreset: (preset) => set((state) => ({ presets: [...state.presets, preset] })),
             updatePreset: (id, updates) => set((state) => ({
@@ -187,6 +200,14 @@ export const useTimerStore = create<TimerState>()(
             }),
 
             deleteInterval: (intervalId) => set((state) => {
+                const activePreset = state.presets.find(p => p.id === state.activePresetId);
+                if (!activePreset) return state;
+
+                const index = activePreset.intervals.findIndex(i => i.id === intervalId);
+                if (index === -1) return state;
+
+                const intervalToDelete = activePreset.intervals[index];
+
                 const presets = state.presets.map(p => {
                     if (p.id === state.activePresetId) {
                         return {
@@ -196,7 +217,15 @@ export const useTimerStore = create<TimerState>()(
                     }
                     return p;
                 });
-                return { presets };
+
+                return {
+                    presets,
+                    lastDeleted: {
+                        presetId: state.activePresetId!,
+                        interval: intervalToDelete,
+                        index
+                    }
+                };
             }),
 
             duplicateInterval: (intervalId, newId) => set((state) => {
@@ -235,6 +264,30 @@ export const useTimerStore = create<TimerState>()(
                     return p;
                 });
                 return { presets };
+            }),
+
+            jumpToInterval: (index) => set({
+                currentIntervalIndex: index,
+                elapsedInInterval: 0,
+                intervalBaseline: 0,
+                isRunning: false, // Pause to reset timing logic
+                timerResetRequest: true // Signal engine to reset
+            }),
+
+            undoDeleteInterval: () => set((state) => {
+                const { lastDeleted } = state;
+                if (!lastDeleted || lastDeleted.presetId !== state.activePresetId) return state;
+
+                const presets = state.presets.map(p => {
+                    if (p.id === state.activePresetId) {
+                        const newIntervals = [...p.intervals];
+                        newIntervals.splice(lastDeleted.index, 0, lastDeleted.interval);
+                        return { ...p, intervals: newIntervals };
+                    }
+                    return p;
+                });
+
+                return { presets, lastDeleted: null };
             })
         }),
         {

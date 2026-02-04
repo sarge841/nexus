@@ -2,6 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -31,10 +35,22 @@ export default defineConfig({
       }
     })
   ],
+  resolve: {
+    alias: {
+      '@dnd-kit/core': path.resolve(__dirname, 'node_modules/@dnd-kit/core/dist/core.esm.js'),
+      '@dnd-kit/sortable': path.resolve(__dirname, 'node_modules/@dnd-kit/sortable/dist/sortable.esm.js'),
+      '@dnd-kit/utilities': path.resolve(__dirname, 'node_modules/@dnd-kit/utilities/dist/utilities.esm.js'),
+      '@dnd-kit/modifiers': path.resolve(__dirname, 'node_modules/@dnd-kit/modifiers/dist/modifiers.esm.js'),
+      'clsx': path.resolve(__dirname, 'node_modules/clsx/dist/clsx.mjs'),
+    }
+  },
   server: {
-    host: true
+    host: true,
+    proxy: {
+      '/api': 'http://localhost:8080'
+    }
   },
   optimizeDeps: {
-    include: ['clsx', 'tailwind-merge', 'nanoid'],
+    include: ['tailwind-merge', 'nanoid'],
   }
 })

@@ -10,13 +10,26 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Serve
-FROM docker.io/library/nginx:alpine
+# Stage 2: Serve
+FROM docker.io/library/node:20-alpine
 
-# Copy built assets from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Expose port 80
-EXPOSE 80
+# Copy server dependencies
+COPY server/package*.json ./
+RUN npm ci --production
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Copy server code
+COPY server/ ./
+
+# Copy built frontend assets
+COPY --from=builder /app/dist ./dist
+
+# Expose port 8080 (matched in server/index.js)
+EXPOSE 8080
+
+# Set absolute path for dist in container environment
+ENV DIST_PATH=/app/dist
+
+# Start Node Server
+CMD ["node", "index.js"]
