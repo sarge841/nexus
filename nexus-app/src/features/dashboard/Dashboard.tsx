@@ -1,4 +1,4 @@
-import { Timer, Settings } from 'lucide-react';
+import { Timer, Settings, Utensils } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
 export const Dashboard = () => {
@@ -12,7 +12,13 @@ export const Dashboard = () => {
             icon: Timer,
             color: 'bg-indigo-500',
         },
-        // Future tools can be added here
+        {
+            id: 'meal-matcher' as const,
+            name: 'Meal Matcher',
+            description: 'Decide what to eat through head-to-head food category elimination.',
+            icon: Utensils,
+            color: 'bg-amber-500',
+        },
         {
             id: 'settings' as const,
             name: 'Settings',

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type Tool = 'home' | 'timer' | 'settings';
+type Tool = 'home' | 'timer' | 'meal-matcher' | 'settings';
 type Theme = 'light' | 'dark';
 
 interface AppState {

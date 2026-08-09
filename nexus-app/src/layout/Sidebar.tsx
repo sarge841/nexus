@@ -1,4 +1,4 @@
-import { Timer, Settings, X, Ghost, Home } from 'lucide-react';
+import { Timer, Settings, X, Ghost, Home, Utensils } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import clsx from 'clsx';
 
@@ -8,6 +8,7 @@ export const Sidebar = () => {
     const navItems = [
         { id: 'home', label: 'Home', icon: Home },
         { id: 'timer', label: 'Timer', icon: Timer },
+        { id: 'meal-matcher', label: 'Meal Matcher', icon: Utensils },
         { id: 'settings', label: 'Settings', icon: Settings },
     ] as const;
 

@@ -1,6 +1,7 @@
 import { Layout } from './layout/Layout';
 import { useAppStore } from './store/useAppStore';
 import { TimerFeature } from './features/timer';
+import { MealMatcherFeature } from './features/meal-matcher';
 import { Dashboard } from './features/dashboard/Dashboard';
 import { SharedPresetImport } from './features/timer/components/SharedPresetImport';
 import { useState, useEffect } from 'react';
@@ -14,10 +15,6 @@ function App() {
     const match = path.match(/^\/s\/([a-zA-Z0-9_-]+)$/);
     if (match) {
       setSharedShortId(match[1]);
-      // Clean URL to avoid re-triggering on refresh? 
-      // Maybe better to leave it so they can share the URL from address bar?
-      // User asked for ephemeral.
-      // Let's leave it for now.
     }
   }, []);
 
@@ -30,13 +27,8 @@ function App() {
     <Layout>
       {activeTool === 'home' && <Dashboard />}
       {activeTool === 'timer' && <TimerFeature />}
+      {activeTool === 'meal-matcher' && <MealMatcherFeature />}
 
-      {activeTool === 'settings' && (
-        <div className="p-4">
-          <h2 className="text-2xl font-bold mb-4">Settings</h2>
-          <p>Global app settings will go here.</p>
-        </div>
-      )}
       {activeTool === 'settings' && (
         <div className="p-4">
           <h2 className="text-2xl font-bold mb-4">Settings</h2>
